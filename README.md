@@ -29,7 +29,7 @@ This is a simple and functional E-commerce web application built using Django. I
 1. **Clone the repository**
 
 ```bash
-git clone [https://github.com/yourusername/django-ecommerce.git](https://github.com/santhoshsharuk/djano_ecom.git)
+git clone https://github.com/yourusername/django-ecommerce.git
 cd django-ecommerce
 ```
 
