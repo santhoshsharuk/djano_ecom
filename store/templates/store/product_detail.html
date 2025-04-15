@@ -1,0 +1,875 @@
+{% extends 'store/base.html' %}
+{% block content %}
+<!-- Breadcrumb Navigation -->
+<div class="flex items-center text-sm text-gray-500 mb-6">
+    <a href="/" class="hover:text-blue-600">Home</a>
+    <span class="mx-2">/</span>
+    <a href="/category/{{ product.category|lower }}" class="hover:text-blue-600">{{ product.category }}</a>
+    <span class="mx-2">/</span>
+    <span class="text-gray-700">{{ product.name }}</span>
+</div>
+
+<!-- Main Product Section -->
+<div class="bg-white rounded-lg shadow-sm overflow-hidden">
+    <div class="md:flex">
+        <!-- Product Image Gallery Section -->
+        <div class="md:w-1/2 relative">
+            <!-- Main Product Image -->
+            <div class="relative h-96 overflow-hidden">
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover" id="mainImage">
+                
+                <!-- Product Badges -->
+                {% if product.is_new %}
+                <div class="absolute top-4 left-4">
+                    <span class="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded">NEW</span>
+                </div>
+                {% elif product.is_sale %}
+                <div class="absolute top-4 left-4">
+                    <span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">SALE</span>
+                </div>
+                {% endif %}
+                
+                <!-- Zoom / Full Screen Button -->
+                <button class="absolute bottom-4 right-4 bg-white/80 backdrop-blur-sm text-gray-800 p-2 rounded-full hover:bg-white transition-colors" id="zoomButton">
+                    <i class="fas fa-search-plus"></i>
+                </button>
+            </div>
+            
+            <!-- Thumbnail Gallery -->
+            <div class="flex p-4 space-x-2 overflow-x-auto">
+                <div class="w-16 h-16 rounded border-2 border-blue-600 cursor-pointer">
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover thumbnail-img">
+                </div>
+                {% if product.images %}
+                    {% for image in product.images %}
+                    <div class="w-16 h-16 rounded border border-gray-200 hover:border-blue-600 cursor-pointer">
+                        <img src="{{ image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover thumbnail-img">
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <!-- Placeholder thumbnails for demo -->
+                    <div class="w-16 h-16 rounded border border-gray-200 hover:border-blue-600 cursor-pointer">
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover thumbnail-img">
+                    </div>
+                    <div class="w-16 h-16 rounded border border-gray-200 hover:border-blue-600 cursor-pointer">
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover thumbnail-img">
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Product Info Section -->
+        <div class="md:w-1/2 p-6">
+            <!-- Product Title & Reviews -->
+            <div class="pb-4 border-b border-gray-100">
+                <h1 class="text-2xl font-bold text-gray-800">{{ product.name }}</h1>
+                
+                <div class="flex items-center justify-between mt-2">
+                    <div class="flex items-center">
+                        <div class="flex text-yellow-400">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                        <span class="text-gray-600 text-sm ml-2">(4.5/5)</span>
+                        <a href="#reviews" class="text-blue-600 text-sm ml-2 hover:underline">86 Reviews</a>
+                    </div>
+                    
+                    <!-- Share Button -->
+                    <button class="text-gray-500 hover:text-blue-600" id="shareButton">
+                        <i class="fas fa-share-alt"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Pricing Section -->
+            <div class="py-4 border-b border-gray-100">
+                {% if product.is_sale %}
+                <div class="flex items-center">
+                    <p class="text-2xl font-bold text-gray-800">₹{{ product.sale_price|default:product.price }}</p>
+                    <p class="text-lg text-gray-500 line-through ml-2">₹{{ product.regular_price|default:'3499' }}</p>
+                    <span class="ml-2 bg-red-100 text-red-700 px-2 py-0.5 rounded text-sm font-medium">{{ product.discount|default:'25' }}% OFF</span>
+                </div>
+                {% else %}
+                <p class="text-2xl font-bold text-gray-800">₹{{ product.price }}</p>
+                {% endif %}
+                
+                <!-- Stock Status with Indicator -->
+                <div class="flex items-center mt-2">
+                    <span class="inline-block w-3 h-3 rounded-full bg-green-500 mr-2"></span>
+                    <p class="text-sm text-green-600">In Stock</p>
+                    <span class="text-gray-500 text-sm ml-1">({{ product.stock_count|default:'42' }} units)</span>
+                </div>
+                
+                <!-- Free Delivery Badge -->
+                <div class="mt-2">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <i class="fas fa-truck mr-1"></i> Free Delivery
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Color & Size Options (if applicable) -->
+            <div class="py-4 border-b border-gray-100">
+                {% if product.has_color_options|default:True %}
+                <div class="mb-4">
+                    <h3 class="text-gray-700 font-medium mb-2">Colors</h3>
+                    <div class="flex space-x-2">
+                        <div class="w-8 h-8 rounded-full bg-blue-600 cursor-pointer ring-2 ring-offset-2 ring-blue-600"></div>
+                        <div class="w-8 h-8 rounded-full bg-red-500 cursor-pointer hover:ring-2 hover:ring-offset-2 hover:ring-red-500"></div>
+                        <div class="w-8 h-8 rounded-full bg-gray-800 cursor-pointer hover:ring-2 hover:ring-offset-2 hover:ring-gray-800"></div>
+                        <div class="w-8 h-8 rounded-full bg-green-500 cursor-pointer hover:ring-2 hover:ring-offset-2 hover:ring-green-500"></div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if product.has_size_options|default:True %}
+                <div>
+                    <h3 class="text-gray-700 font-medium mb-2">Size</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <button class="w-10 h-10 border border-gray-300 rounded-md text-sm font-medium hover:border-blue-600 hover:text-blue-600">XS</button>
+                        <button class="w-10 h-10 border border-blue-600 bg-blue-50 rounded-md text-sm font-medium text-blue-600">S</button>
+                        <button class="w-10 h-10 border border-gray-300 rounded-md text-sm font-medium hover:border-blue-600 hover:text-blue-600">M</button>
+                        <button class="w-10 h-10 border border-gray-300 rounded-md text-sm font-medium hover:border-blue-600 hover:text-blue-600">L</button>
+                        <button class="w-10 h-10 border border-gray-300 rounded-md text-sm font-medium hover:border-blue-600 hover:text-blue-600">XL</button>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Description -->
+            <div class="py-4 border-b border-gray-100">
+                <h3 class="text-gray-700 font-medium mb-2">Description</h3>
+                <p class="text-gray-600">{{ product.description }}</p>
+                <button class="text-blue-600 hover:underline text-sm mt-2">Read More</button>
+            </div>
+            
+            <!-- Quantity Selector & Action Buttons -->
+            <div class="mt-6">
+                <div class="flex items-center mb-4">
+                    <span class="text-gray-700 font-medium mr-4">Quantity</span>
+                    <div class="flex border border-gray-300 rounded">
+                        <button class="px-3 py-1 text-gray-600 hover:bg-gray-100" id="decreaseQuantity">−</button>
+                        <input type="text" value="1" class="w-12 text-center focus:outline-none" id="quantityInput">
+                        <button class="px-3 py-1 text-gray-600 hover:bg-gray-100" id="increaseQuantity">+</button>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-4">
+                    <a href="{% url 'add_to_cart' product.id %}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md flex items-center justify-center transition-colors">
+                        <i class="fas fa-cart-plus mr-2"></i> Add to Cart
+                    </a>
+                    <button class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-3 rounded-md flex items-center justify-center transition-colors" id="wishlistButton">
+                        <i class="far fa-heart"></i>
+                    </button>
+                    <button class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-3 rounded-md flex items-center justify-center transition-colors">
+                        <i class="fas fa-share-alt"></i>
+                    </button>
+                </div>
+                
+                <!-- Buy Now Button -->
+                <a href="{% url 'checkout' %}" class="mt-3 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-md flex items-center justify-center transition-colors">
+                    <i class="fas fa-bolt mr-2"></i> Buy Now
+                </a>
+            </div>
+            
+            <!-- Trust Badges -->
+            <div class="flex justify-between mt-6 pt-4 border-t border-gray-100">
+                <div class="flex flex-col items-center">
+                    <i class="fas fa-shield-alt text-gray-400 text-xl"></i>
+                    <span class="text-xs text-gray-500 mt-1">Secure Payment</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <i class="fas fa-undo text-gray-400 text-xl"></i>
+                    <span class="text-xs text-gray-500 mt-1">30-Day Returns</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <i class="fas fa-truck text-gray-400 text-xl"></i>
+                    <span class="text-xs text-gray-500 mt-1">Fast Delivery</span>
+                </div>
+                <div class="flex flex-col items-center">
+                    <i class="fas fa-check-circle text-gray-400 text-xl"></i>
+                    <span class="text-xs text-gray-500 mt-1">Quality Assured</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Product Details Tab Section -->
+    <div class="p-6 border-t border-gray-200">
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                <button class="border-blue-600 text-blue-600 py-4 px-1 border-b-2 font-medium text-sm" id="tab-details">
+                    Product Details
+                </button>
+                <button class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-4 px-1 border-b-2 font-medium text-sm" id="tab-specs">
+                    Specifications
+                </button>
+                <button class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-4 px-1 border-b-2 font-medium text-sm" id="tab-reviews">
+                    Reviews (86)
+                </button>
+                <button class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-4 px-1 border-b-2 font-medium text-sm" id="tab-shipping">
+                    Shipping & Returns
+                </button>
+            </nav>
+        </div>
+        
+        <!-- Tab Content -->
+        <div class="py-6">
+            <!-- Details Tab (visible by default) -->
+            <div class="tab-content" id="content-details">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-800 mb-3">Product Information</h3>
+                        <ul class="space-y-2 text-gray-600">
+                            <li class="flex justify-between border-b border-gray-100 py-2">
+                                <span class="font-medium">Brand</span>
+                                <span>{{ product.brand }}</span>
+                            </li>
+                            <li class="flex justify-between border-b border-gray-100 py-2">
+                                <span class="font-medium">Category</span>
+                                <span>{{ product.category }}</span>
+                            </li>
+                            <li class="flex justify-between border-b border-gray-100 py-2">
+                                <span class="font-medium">SKU</span>
+                                <span>{{ product.sku }}</span>
+                            </li>
+                            <li class="flex justify-between border-b border-gray-100 py-2">
+                                <span class="font-medium">Material</span>
+                                <span>{{ product.material|default:'Premium' }}</span>
+                            </li>
+                            <li class="flex justify-between border-b border-gray-100 py-2">
+                                <span class="font-medium">Weight</span>
+                                <span>{{ product.weight|default:'0.5 kg' }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-800 mb-3">Highlights</h3>
+                        <ul class="space-y-1 text-gray-600">
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                <span>Premium quality materials for durability</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                <span>Ergonomic design for maximum comfort</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                <span>Easy to clean and maintain</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                <span>Versatile usage for various occasions</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                <span>Environment-friendly manufacturing process</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Specifications Tab (hidden by default) -->
+            <div class="tab-content hidden" id="content-specs">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specification</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Dimensions</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">12 × 8 × 3 inches</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Weight</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.5 kg</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Material</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Premium blend</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Color Options</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Blue, Red, Black, Green</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Care Instructions</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Hand wash only, air dry</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Reviews Tab (hidden by default) -->
+            <div class="tab-content hidden" id="content-reviews">
+                <div class="mb-6">
+                    <div class="flex items-center">
+                        <div class="flex-1">
+                            <h3 class="text-lg font-medium text-gray-800">Customer Reviews</h3>
+                            <div class="flex items-center mt-1">
+                                <div class="flex text-yellow-400">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                </div>
+                                <span class="text-gray-600 ml-2">4.5 out of 5</span>
+                            </div>
+                            <p class="text-gray-500 text-sm mt-1">Based on 86 reviews</p>
+                        </div>
+                        <a href="#write-review" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm">Write a Review</a>
+                    </div>
+                    
+                    <!-- Review Rating Distribution -->
+                    <div class="mt-4">
+                        <div class="flex items-center mt-2">
+                            <span class="text-sm text-gray-600 w-10">5 ★</span>
+                            <div class="flex-1 h-2 bg-gray-200 rounded-full mx-2">
+                                <div class="h-2 bg-yellow-400 rounded-full" style="width: 75%"></div>
+                            </div>
+                            <span class="text-xs text-gray-500 w-10">75%</span>
+                        </div>
+                        <div class="flex items-center mt-2">
+                            <span class="text-sm text-gray-600 w-10">4 ★</span>
+                            <div class="flex-1 h-2 bg-gray-200 rounded-full mx-2">
+                                <div class="h-2 bg-yellow-400 rounded-full" style="width: 17%"></div>
+                            </div>
+                            <span class="text-xs text-gray-500 w-10">17%</span>
+                        </div>
+                        <div class="flex items-center mt-2">
+                            <span class="text-sm text-gray-600 w-10">3 ★</span>
+                            <div class="flex-1 h-2 bg-gray-200 rounded-full mx-2">
+                                <div class="h-2 bg-yellow-400 rounded-full" style="width: 5%"></div>
+                            </div>
+                            <span class="text-xs text-gray-500 w-10">5%</span>
+                        </div>
+                        <div class="flex items-center mt-2">
+                            <span class="text-sm text-gray-600 w-10">2 ★</span>
+                            <div class="flex-1 h-2 bg-gray-200 rounded-full mx-2">
+                                <div class="h-2 bg-yellow-400 rounded-full" style="width: 2%"></div>
+                            </div>
+                            <span class="text-xs text-gray-500 w-10">2%</span>
+                        </div>
+                        <div class="flex items-center mt-2">
+                            <span class="text-sm text-gray-600 w-10">1 ★</span>
+                            <div class="flex-1 h-2 bg-gray-200 rounded-full mx-2">
+                                <div class="h-2 bg-yellow-400 rounded-full" style="width: 1%"></div>
+                            </div>
+                            <span class="text-xs text-gray-500 w-10">1%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sample Reviews -->
+                <div class="border-t border-gray-200 pt-6">
+                    <!-- Review 1 -->
+                    <div class="mb-6 pb-6 border-b border-gray-100">
+                        <div class="flex items-center mb-2">
+                            <img src="/api/placeholder/40/40" alt="User" class="w-10 h-10 rounded-full object-cover mr-3">
+                            <div>
+                                <h4 class="font-medium text-gray-800">Priya Sharma</h4>
+                                <div class="flex items-center">
+                                    <div class="flex text-yellow-400 text-sm">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                    <span class="text-gray-500 text-xs ml-2">April 12, 2025</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-gray-600">Absolutely love this product! The quality is exceptional and it's exactly as described. Fast shipping too. Would definitely recommend to anyone looking for a reliable and stylish option.</p>
+                        <div class="flex items-center mt-3">
+                            <button class="flex items-center text-gray-500 hover:text-blue-600 text-sm mr-4">
+                                <i class="far fa-thumbs-up mr-1"></i> Helpful (12)
+                            </button>
+                            <button class="text-gray-500 hover:text-blue-600 text-sm">
+                                <i class="far fa-comment mr-1"></i> Reply
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Review 2 -->
+                    <div class="mb-6 pb-6 border-b border-gray-100">
+                        <div class="flex items-center mb-2">
+                            <img src="/api/placeholder/40/40" alt="User" class="w-10 h-10 rounded-full object-cover mr-3">
+                            <div>
+                                <h4 class="font-medium text-gray-800">Rahul Patel</h4>
+                                <div class="flex items-center">
+                                    <div class="flex text-yellow-400 text-sm">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="far fa-star"></i>
+                                    </div>
+                                    <span class="text-gray-500 text-xs ml-2">April 8, 2025</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-gray-600">Great product overall. The only reason I'm giving 4 stars instead of 5 is because the color is slightly different from what's shown in the picture. But the quality is very good and it arrived earlier than expected.</p>
+                        <div class="flex items-center mt-3">
+                            <button class="flex items-center text-gray-500 hover:text-blue-600 text-sm mr-4">
+                                <i class="far fa-thumbs-up mr-1"></i> Helpful (8)
+                            </button>
+                            <button class="text-gray-500 hover:text-blue-600 text-sm">
+                                <i class="far fa-comment mr-1"></i> Reply
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Show More Button -->
+                    <button class="text-blue-600 hover:text-blue-800 font-medium">
+                        Load More Reviews
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Shipping & Returns Tab (hidden by default) -->
+            <div class="tab-content hidden" id="content-shipping">
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-800 mb-2">Shipping Information</h3>
+                        <p class="text-gray-600">We offer free standard shipping on all orders over ₹1000. Orders are typically processed within 24 hours during business days.</p>
+                        <table class="min-w-full divide-y divide-gray-200 mt-4">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shipping Method</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estimated Delivery</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Standard Shipping</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3-5 Business Days</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Free for orders over ₹1000</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Express Shipping</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1-2 Business Days</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹150</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Same Day Delivery</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Same Day (Order before 11 AM)</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹300 (Select cities only)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-800 mb-2">Return Policy</h3>
+                        <p class="text-gray-600">We offer a hassle-free 30-day return policy on all purchases. If you're not completely satisfied with your purchase, you can return it within 30 days of delivery for a full refund or exchange.</p>
+                        
+                        <div class="mt-4 space-y-3">
+                            <div class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                                <div>
+                                    <h4 class="font-medium text-gray-800 text-sm">Easy Returns</h4>
+                                    <p class="text-gray-600 text-sm">Return items online or at any of our retail locations.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                                <div>
+                                    <h4 class="font-medium text-gray-800 text-sm">Full Refunds</h4>
+                                    <p class="text-gray-600 text-sm">Get a full refund including shipping costs for eligible returns.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                                <div>
+                                    <h4 class="font-medium text-gray-800 text-sm">Free Return Shipping</h4>
+                                    <p class="text-gray-600 text-sm">We provide free return shipping labels for online purchases.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                            <div class="flex">
+                                <i class="fas fa-info-circle text-yellow-600 mt-1 mr-3"></i>
+                                <div>
+                                    <h4 class="font-medium text-gray-800 text-sm">Please Note</h4>
+                                    <p class="text-gray-600 text-sm">Items must be returned in their original condition with tags attached and in the original packaging. Some items, such as personalized products or intimate apparel, may not be eligible for return due to hygiene reasons.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Related Products Section -->
+<div class="mt-12">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">You May Also Like</h2>
+    
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <!-- Related Product 1 -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 group">
+            <div class="relative h-48 overflow-hidden">
+                <img src="/api/placeholder/300/300" alt="Related Product" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                <button class="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/70 backdrop-blur-sm flex items-center justify-center text-gray-600 hover:text-red-500 transition-colors">
+                    <i class="far fa-heart"></i>
+                </button>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center mb-1">
+                    <div class="flex text-yellow-400 text-xs">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <span class="text-gray-500 text-xs ml-1">(5.0)</span>
+                </div>
+                <h3 class="font-medium text-gray-800 mb-1 line-clamp-1">Premium Wireless Headphones</h3>
+                <p class="text-blue-600 font-semibold">₹2,499</p>
+                <a href="#" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-1.5 rounded flex items-center justify-center">
+                    <i class="fas fa-cart-plus mr-1"></i> Add to Cart
+                </a>
+            </div>
+        </div>
+        
+        <!-- Related Product 2 -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 group">
+            <div class="relative h-48 overflow-hidden">
+                <img src="/api/placeholder/300/300" alt="Related Product" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                <button class="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/70 backdrop-blur-sm flex items-center justify-center text-gray-600 hover:text-red-500 transition-colors">
+                    <i class="far fa-heart"></i>
+                </button>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center mb-1">
+                    <div class="flex text-yellow-400 text-xs">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="far fa-star"></i>
+                    </div>
+                    <span class="text-gray-500 text-xs ml-1">(4.0)</span>
+                </div>
+                <h3 class="font-medium text-gray-800 mb-1 line-clamp-1">Smartwatch with Health Tracking</h3>
+                <p class="text-blue-600 font-semibold">₹1,899</p>
+                <a href="#" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-1.5 rounded flex items-center justify-center">
+                    <i class="fas fa-cart-plus mr-1"></i> Add to Cart
+                </a>
+            </div>
+        </div>
+        
+        <!-- Related Product 3 -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 group">
+            <div class="relative h-48 overflow-hidden">
+                <img src="/api/placeholder/300/300" alt="Related Product" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                <div class="absolute top-2 left-2">
+                    <span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">SALE</span>
+                </div>
+                <button class="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/70 backdrop-blur-sm flex items-center justify-center text-gray-600 hover:text-red-500 transition-colors">
+                    <i class="far fa-heart"></i>
+                </button>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center mb-1">
+                    <div class="flex text-yellow-400 text-xs">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star-half-alt"></i>
+                    </div>
+                    <span class="text-gray-500 text-xs ml-1">(4.5)</span>
+                </div>
+                <h3 class="font-medium text-gray-800 mb-1 line-clamp-1">Portable Bluetooth Speaker</h3>
+                <div class="flex items-center">
+                    <span class="text-gray-500 text-sm line-through mr-2">₹1,499</span>
+                    <span class="text-blue-600 font-semibold">₹999</span>
+                </div>
+                <a href="#" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-1.5 rounded flex items-center justify-center">
+                    <i class="fas fa-cart-plus mr-1"></i> Add to Cart
+                </a>
+            </div>
+        </div>
+        
+        <!-- Related Product 4 -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 group">
+            <div class="relative h-48 overflow-hidden">
+                <img src="/api/placeholder/300/300" alt="Related Product" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                <button class="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/70 backdrop-blur-sm flex items-center justify-center text-gray-600 hover:text-red-500 transition-colors">
+                    <i class="far fa-heart"></i>
+                </button>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center mb-1">
+                    <div class="flex text-yellow-400 text-xs">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <span class="text-gray-500 text-xs ml-1">(5.0)</span>
+                </div>
+                <h3 class="font-medium text-gray-800 mb-1 line-clamp-1">Wireless Charging Pad</h3>
+                <p class="text-blue-600 font-semibold">₹799</p>
+                <a href="#" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-1.5 rounded flex items-center justify-center">
+                    <i class="fas fa-cart-plus mr-1"></i> Add to Cart
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recently Viewed Products -->
+<div class="mt-12">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">Recently Viewed</h2>
+    
+    <div class="flex overflow-x-auto space-x-4 pb-4">
+        <!-- Recently Viewed Product 1 -->
+        <div class="min-w-[200px] max-w-[200px] bg-white rounded-lg shadow-sm overflow-hidden flex-shrink-0">
+            <div class="h-32 overflow-hidden">
+                <img src="/api/placeholder/200/200" alt="Recent Product" class="w-full h-full object-cover">
+            </div>
+            <div class="p-3">
+                <h3 class="font-medium text-gray-800 text-sm line-clamp-1">Wireless Earbuds</h3>
+                <p class="text-blue-600 font-semibold text-sm">₹1,299</p>
+            </div>
+        </div>
+        
+        <!-- Recently Viewed Product 2 -->
+        <div class="min-w-[200px] max-w-[200px] bg-white rounded-lg shadow-sm overflow-hidden flex-shrink-0">
+            <div class="h-32 overflow-hidden">
+                <img src="/api/placeholder/200/200" alt="Recent Product" class="w-full h-full object-cover">
+            </div>
+            <div class="p-3">
+                <h3 class="font-medium text-gray-800 text-sm line-clamp-1">Smart LED Bulb</h3>
+                <p class="text-blue-600 font-semibold text-sm">₹599</p>
+            </div>
+        </div>
+        
+        <!-- Recently Viewed Product 3 -->
+        <div class="min-w-[200px] max-w-[200px] bg-white rounded-lg shadow-sm overflow-hidden flex-shrink-0">
+            <div class="h-32 overflow-hidden">
+                <img src="/api/placeholder/200/200" alt="Recent Product" class="w-full h-full object-cover">
+            </div>
+            <div class="p-3">
+                <h3 class="font-medium text-gray-800 text-sm line-clamp-1">USB-C Fast Charger</h3>
+                <p class="text-blue-600 font-semibold text-sm">₹849</p>
+            </div>
+        </div>
+        
+        <!-- Recently Viewed Product 4 -->
+        <div class="min-w-[200px] max-w-[200px] bg-white rounded-lg shadow-sm overflow-hidden flex-shrink-0">
+            <div class="h-32 overflow-hidden">
+                <img src="/api/placeholder/200/200" alt="Recent Product" class="w-full h-full object-cover">
+            </div>
+            <div class="p-3">
+                <h3 class="font-medium text-gray-800 text-sm line-clamp-1">Bluetooth Keyboard</h3>
+                <p class="text-blue-600 font-semibold text-sm">₹1,499</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Zoom Modal -->
+<div id="imageZoomModal" class="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center hidden">
+    <button id="closeZoomModal" class="absolute top-4 right-4 text-white text-2xl">
+        <i class="fas fa-times"></i>
+    </button>
+    <img id="zoomedImage" src="{{ product.image.url }}" alt="{{ product.name }}" class="max-h-[90vh] max-w-[90vw]">
+    <button id="prevZoomImage" class="absolute left-4 text-white text-4xl opacity-70 hover:opacity-100">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+    <button id="nextZoomImage" class="absolute right-4 text-white text-4xl opacity-70 hover:opacity-100">
+        <i class="fas fa-chevron-right"></i>
+    </button>
+</div>
+
+<!-- Social Share Modal -->
+<div id="shareModal" class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg p-6 w-80">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-800">Share This Product</h3>
+            <button id="closeShareModal" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="grid grid-cols-4 gap-4">
+            <a href="#" class="flex flex-col items-center">
+                <div class="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white mb-1">
+                    <i class="fab fa-facebook-f"></i>
+                </div>
+                <span class="text-xs text-gray-600">Facebook</span>
+            </a>
+            <a href="#" class="flex flex-col items-center">
+                <div class="w-12 h-12 rounded-full bg-blue-400 flex items-center justify-center text-white mb-1">
+                    <i class="fab fa-twitter"></i>
+                </div>
+                <span class="text-xs text-gray-600">Twitter</span>
+            </a>
+            <a href="#" class="flex flex-col items-center">
+                <div class="w-12 h-12 rounded-full bg-pink-600 flex items-center justify-center text-white mb-1">
+                    <i class="fab fa-instagram"></i>
+                </div>
+                <span class="text-xs text-gray-600">Instagram</span>
+            </a>
+            <a href="#" class="flex flex-col items-center">
+                <div class="w-12 h-12 rounded-full bg-green-600 flex items-center justify-center text-white mb-1">
+                    <i class="fab fa-whatsapp"></i>
+                </div>
+                <span class="text-xs text-gray-600">WhatsApp</span>
+            </a>
+        </div>
+        <div class="mt-4 pt-4 border-t border-gray-100">
+            <label class="block text-sm text-gray-700 mb-2">Product Link</label>
+            <div class="flex">
+                <input type="text" value="https://yourstore.com/product/{{ product.id }}" class="flex-1 border border-gray-300 rounded-l-md px-3 py-2 text-sm" readonly>
+                <button class="bg-blue-600 text-white px-3 py-2 rounded-r-md" id="copyLink">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tab switching functionality
+        const tabs = ['details', 'specs', 'reviews', 'shipping'];
+        
+        tabs.forEach(tabId => {
+            const tabButton = document.getElementById(`tab-${tabId}`);
+            const tabContent = document.getElementById(`content-${tabId}`);
+            
+            tabButton.addEventListener('click', function() {
+                // Hide all content sections
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                // Remove active state from all tabs
+                document.querySelectorAll('[id^="tab-"]').forEach(tab => {
+                    tab.classList.remove('border-blue-600', 'text-blue-600');
+                    tab.classList.add('border-transparent', 'text-gray-500');
+                });
+                
+                // Show active content and set active tab
+                tabContent.classList.remove('hidden');
+                tabButton.classList.remove('border-transparent', 'text-gray-500');
+                tabButton.classList.add('border-blue-600', 'text-blue-600');
+            });
+        });
+        
+        // Quantity control
+        const decreaseBtn = document.getElementById('decreaseQuantity');
+        const increaseBtn = document.getElementById('increaseQuantity');
+        const quantityInput = document.getElementById('quantityInput');
+        
+        decreaseBtn.addEventListener('click', function() {
+            const currentValue = parseInt(quantityInput.value);
+            if (currentValue > 1) {
+                quantityInput.value = currentValue - 1;
+            }
+        });
+        
+        increaseBtn.addEventListener('click', function() {
+            const currentValue = parseInt(quantityInput.value);
+            quantityInput.value = currentValue + 1;
+        });
+        
+        // Wishlist button toggle
+        const wishlistButton = document.getElementById('wishlistButton');
+        wishlistButton.addEventListener('click', function() {
+            const heartIcon = wishlistButton.querySelector('i');
+            if (heartIcon.classList.contains('far')) {
+                heartIcon.classList.remove('far');
+                heartIcon.classList.add('fas', 'text-red-500');
+            } else {
+                heartIcon.classList.remove('fas', 'text-red-500');
+                heartIcon.classList.add('far');
+            }
+        });
+        
+        // Image gallery functionality
+        const mainImage = document.getElementById('mainImage');
+        const thumbnailImages = document.querySelectorAll('.thumbnail-img');
+        
+        thumbnailImages.forEach(thumbnail => {
+            thumbnail.addEventListener('click', function() {
+                // Update main image src
+                mainImage.src = this.src;
+                
+                // Update active thumbnail
+                thumbnailImages.forEach(thumb => {
+                    thumb.parentElement.classList.remove('border-blue-600');
+                    thumb.parentElement.classList.add('border-gray-200');
+                });
+                
+                this.parentElement.classList.remove('border-gray-200');
+                this.parentElement.classList.add('border-blue-600');
+            });
+        });
+        
+        // Image zoom modal
+        const zoomButton = document.getElementById('zoomButton');
+        const imageZoomModal = document.getElementById('imageZoomModal');
+        const closeZoomModal = document.getElementById('closeZoomModal');
+        const zoomedImage = document.getElementById('zoomedImage');
+        
+        zoomButton.addEventListener('click', function() {
+            zoomedImage.src = mainImage.src;
+            imageZoomModal.classList.remove('hidden');
+        });
+        
+        closeZoomModal.addEventListener('click', function() {
+            imageZoomModal.classList.add('hidden');
+        });
+        
+        // Share modal
+        const shareButton = document.getElementById('shareButton');
+        const shareModal = document.getElementById('shareModal');
+        const closeShareModal = document.getElementById('closeShareModal');
+        
+        shareButton.addEventListener('click', function() {
+            shareModal.classList.remove('hidden');
+        });
+        
+        closeShareModal.addEventListener('click', function() {
+            shareModal.classList.add('hidden');
+        });
+        
+        // Copy product link
+        const copyLinkButton = document.getElementById('copyLink');
+        copyLinkButton.addEventListener('click', function() {
+            const linkInput = this.parentElement.querySelector('input');
+            linkInput.select();
+            document.execCommand('copy');
+            
+            // Show copied feedback
+            const originalIcon = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-check"></i>';
+            setTimeout(() => {
+                this.innerHTML = originalIcon;
+            }, 2000);
+        });
+    });
+</script>
+{% endblock %}

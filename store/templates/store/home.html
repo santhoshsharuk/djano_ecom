@@ -1,0 +1,237 @@
+{% extends 'store/base.html' %}
+{% block content %}
+<!-- Page Header with Enhanced Styling -->
+<div class="mb-8">
+    <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Featured Products</h1>
+    <div class="flex items-center justify-between">
+        <p class="text-gray-600">Discover our best selling items</p>
+        
+        <!-- Filter & Sort Options -->
+        <div class="flex space-x-3">
+            <div class="relative" x-data="{ open: false }">
+                <button @click="open = !open" class="flex items-center text-sm text-gray-600 hover:text-gray-900 px-3 py-1 border border-gray-200 rounded-md">
+                    <span>Filter</span>
+                    <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                </button>
+                <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+                    <div class="p-3">
+                        <div class="mb-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Price Range</label>
+                            <div class="space-y-1">
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="rounded text-blue-600">
+                                    <span class="ml-2 text-sm text-gray-600">Under ₹500</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="rounded text-blue-600">
+                                    <span class="ml-2 text-sm text-gray-600">₹500 - ₹1000</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="rounded text-blue-600">
+                                    <span class="ml-2 text-sm text-gray-600">₹1000 - ₹2500</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="rounded text-blue-600">
+                                    <span class="ml-2 text-sm text-gray-600">Above ₹2500</span>
+                                </label>
+                            </div>
+                        </div>
+                        <button class="w-full bg-blue-600 text-white text-sm px-3 py-1 rounded">Apply</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="relative" x-data="{ open: false }">
+                <button @click="open = !open" class="flex items-center text-sm text-gray-600 hover:text-gray-900 px-3 py-1 border border-gray-200 rounded-md">
+                    <span>Sort by</span>
+                    <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                </button>
+                <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Featured</a>
+                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Newest</a>
+                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Price: Low to High</a>
+                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Price: High to Low</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Category Pills -->
+<div class="flex overflow-x-auto space-x-2 pb-4 mb-6">
+    <a href="#" class="whitespace-nowrap px-4 py-2 bg-blue-600 text-white rounded-full text-sm font-medium">All Products</a>
+    <a href="#" class="whitespace-nowrap px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full text-sm font-medium">Electronics</a>
+    <a href="#" class="whitespace-nowrap px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full text-sm font-medium">Fashion</a>
+    <a href="#" class="whitespace-nowrap px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full text-sm font-medium">Home & Kitchen</a>
+    <a href="#" class="whitespace-nowrap px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full text-sm font-medium">Beauty</a>
+    <a href="#" class="whitespace-nowrap px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full text-sm font-medium">Books</a>
+</div>
+
+<!-- Enhanced Product Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    {% for product in products %}
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 group">
+        <div class="relative h-52 overflow-hidden">
+            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+            
+            <!-- Quick View Button (Overlay) -->
+            <div class="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <button class="bg-white hover:bg-gray-100 text-gray-800 px-4 py-2 rounded-full shadow-md text-sm font-medium" onclick="quickView({{ product.id }})">
+                    <i class="fas fa-eye mr-1"></i> Quick View
+                </button>
+            </div>
+            
+            <!-- Product Badge (if needed) -->
+            {% if product.is_new %}
+            <div class="absolute top-2 left-2">
+                <span class="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded">NEW</span>
+            </div>
+            {% elif product.is_sale %}
+            <div class="absolute top-2 left-2">
+                <span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">SALE</span>
+            </div>
+            {% endif %}
+            
+            <!-- Wishlist Button -->
+            <button class="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/70 backdrop-blur-sm flex items-center justify-center text-gray-600 hover:text-red-500 transition-colors">
+                <i class="far fa-heart"></i>
+            </button>
+        </div>
+        
+        <div class="p-4">
+            <!-- Rating Stars -->
+            <div class="flex items-center mb-1">
+                <div class="flex text-yellow-400 text-xs">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star-half-alt"></i>
+                </div>
+                <span class="text-gray-500 text-xs ml-1">({{ product.rating|default:"4.5" }})</span>
+            </div>
+            
+            <h2 class="font-medium text-gray-800 mb-1 line-clamp-2 h-12">{{ product.name }}</h2>
+            
+            <!-- Price Section with Discount if any -->
+            <div class="mt-2">
+                {% if product.is_sale %}
+                <div class="flex items-center">
+                    <span class="text-gray-500 text-sm line-through mr-2">₹{{ product.original_price|default:"899" }}</span>
+                    <span class="text-blue-600 font-semibold">₹{{ product.price }}</span>
+                    <span class="ml-2 text-green-600 text-xs">{{ product.discount|default:"25" }}% off</span>
+                </div>
+                {% else %}
+                <div class="text-blue-600 font-semibold">₹{{ product.price }}</div>
+                {% endif %}
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="mt-4 flex justify-between items-center">
+                <a href="{% url 'product_detail' product.id %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View Details</a>
+                <a href="{% url 'add_to_cart' product.id %}" class="flex items-center bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm font-medium transition-colors">
+                    <i class="fas fa-cart-plus mr-1"></i> Add to Cart
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-span-full py-16 text-center">
+        <div class="text-gray-400 mb-4">
+            <i class="fas fa-box-open text-5xl"></i>
+        </div>
+        <h3 class="text-lg font-medium text-gray-800 mb-2">No products found</h3>
+        <p class="text-gray-600">Try adjusting your search or filter to find what you're looking for.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+<div class="mt-12 flex justify-center">
+    <div class="inline-flex rounded-md shadow">
+        <a href="#" class="inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium rounded-l-md hover:bg-gray-50">
+            <i class="fas fa-chevron-left mr-1"></i> Previous
+        </a>
+        <a href="#" class="inline-flex items-center px-4 py-2 border-t border-b border-gray-300 bg-blue-600 text-white text-sm font-medium">1</a>
+        <a href="#" class="inline-flex items-center px-4 py-2 border-t border-b border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50">2</a>
+        <a href="#" class="inline-flex items-center px-4 py-2 border-t border-b border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50">3</a>
+        <a href="#" class="inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-gray-700 text-sm font-medium rounded-r-md hover:bg-gray-50">
+            Next <i class="fas fa-chevron-right ml-1"></i>
+        </a>
+    </div>
+</div>
+
+<!-- Quick View Modal -->
+<div id="quickViewModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen">
+        <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" id="modalOverlay"></div>
+        
+        <div class="relative bg-white rounded-lg max-w-3xl w-full mx-4 shadow-xl overflow-hidden">
+            <div class="absolute top-0 right-0 pt-4 pr-4">
+                <button type="button" id="closeModal" class="text-gray-400 hover:text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="p-6" id="modalContent">
+                <!-- Content will be dynamically loaded here -->
+                <div class="flex flex-col md:flex-row">
+                    <div class="md:w-1/2 pr-0 md:pr-4 mb-4 md:mb-0">
+                        <img src="/api/placeholder/400/400" alt="Product" class="w-full h-auto rounded-lg">
+                    </div>
+                    <div class="md:w-1/2">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Product Title</h3>
+                        <div class="flex items-center mb-2">
+                            <div class="flex text-yellow-400">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
+                            </div>
+                            <span class="text-gray-500 text-sm ml-2">(4.5)</span>
+                        </div>
+                        <p class="text-xl font-bold text-blue-600 mb-2">₹999</p>
+                        <p class="text-gray-600 mb-4">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vitae eros quis nisl aliquam accumsan.</p>
+                        <div class="flex space-x-3 mb-4">
+                            <div class="w-8 h-8 rounded-full bg-blue-600 cursor-pointer"></div>
+                            <div class="w-8 h-8 rounded-full bg-red-500 cursor-pointer"></div>
+                            <div class="w-8 h-8 rounded-full bg-green-500 cursor-pointer"></div>
+                        </div>
+                        <div class="flex space-x-2 mb-4">
+                            <button class="px-4 py-2 bg-blue-600 text-white rounded-md">Add to Cart</button>
+                            <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                        <a href="#" class="text-blue-600 hover:underline">View Full Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Quick View Modal Functionality
+    function quickView(productId) {
+        const modal = document.getElementById('quickViewModal');
+        const overlay = document.getElementById('modalOverlay');
+        const closeBtn = document.getElementById('closeModal');
+        
+        // Show modal
+        modal.classList.remove('hidden');
+        
+        // Close modal when clicking outside or on close button
+        overlay.addEventListener('click', closeModal);
+        closeBtn.addEventListener('click', closeModal);
+        
+        function closeModal() {
+            modal.classList.add('hidden');
+        }
+        
+        // In a real implementation, you would fetch product details by ID
+        console.log(`Quick view for product ID: ${productId}`);
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.10.3/cdn.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .sidebar-transition {
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .product-card:hover .quick-view {
+            opacity: 1;
+        }
+        
+        .loader {
+            border-top-color: #3498db;
+            animation: spinner 1.5s linear infinite;
+        }
+        
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .theme-transition {
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            light: '#4da6ff',
+                            DEFAULT: '#0076e4',
+                            dark: '#0050a8',
+                        },
+                        secondary: {
+                            light: '#ffb366',
+                            DEFAULT: '#ff9933',
+                            dark: '#e67300',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 theme-transition" x-data="{ 
+    sidebarOpen: false, 
+    searchOpen: false,
+    cartPreview: false,
+    darkMode: false,
+    cartCount: 3,
+    notifications: 4,
+    toggleDarkMode() {
+        this.darkMode = !this.darkMode;
+        document.body.classList.toggle('dark');
+        if (this.darkMode) {
+            document.body.classList.add('bg-gray-900', 'text-white');
+            document.body.classList.remove('bg-gray-50', 'text-gray-800');
+        } else {
+            document.body.classList.remove('bg-gray-900', 'text-white');
+            document.body.classList.add('bg-gray-50', 'text-gray-800');
+        }
+    }
+}">
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-white bg-opacity-80 z-50 flex justify-center items-center hidden">
+        <div class="loader w-12 h-12 border-4 border-gray-200 rounded-full"></div>
+    </div>
+
+    <!-- Top Announcement Bar -->
+    <div class="bg-primary-dark text-white text-center py-2 text-sm">
+        <p>Free shipping on orders over ₹1000 | Use code WELCOME20 for 20% off your first order</p>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-white shadow-md theme-transition dark:bg-gray-800 sticky top-0 z-40">
+        <div class="container mx-auto px-4">
+            <!-- Top Navigation -->
+            <div class="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700">
+                <div class="flex items-center space-x-6">
+                    <!-- Mobile menu button -->
+                    <button @click="sidebarOpen = !sidebarOpen" class="md:hidden text-gray-600 dark:text-gray-300 hover:text-primary focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    
+                    <!-- Logo -->
+                    <a href="/" class="flex items-center">
+                        <i class="fas fa-shopping-bag text-primary text-2xl mr-2"></i>
+                        <span class="text-xl font-semibold text-gray-800 dark:text-white">Elegance</span>
+                    </a>
+                </div>
+                
+                <!-- Search Bar -->
+                <div class="hidden md:flex items-center w-1/3 relative">
+                    <div class="w-full">
+                        <input type="text" placeholder="Search products..." 
+                            class="w-full py-2 px-4 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            @focus="searchOpen = true" @blur="setTimeout(() => searchOpen = false, 200)">
+                        <button class="absolute right-3 top-2.5 text-gray-400 hover:text-primary">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Search Results Dropdown -->
+                    <div x-show="searchOpen" 
+                        class="absolute top-full left-0 right-0 bg-white dark:bg-gray-800 shadow-lg rounded-lg mt-1 py-2 z-10"
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 transform scale-y-90"
+                        x-transition:enter-end="opacity-100 transform scale-y-100"
+                        @click.outside="searchOpen = false">
+                        <div class="px-4 py-2 border-b dark:border-gray-700">
+                            <p class="text-gray-500 dark:text-gray-400 text-sm">Popular Searches</p>
+                        </div>
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700">Smartphone</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700">Laptop</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700">Headphones</a>
+                    </div>
+                </div>
+                
+                <!-- Right Nav Items -->
+                <div class="flex items-center space-x-4">
+                    <!-- Mobile Search -->
+                    <button class="md:hidden text-gray-600 dark:text-gray-300 hover:text-primary focus:outline-none">
+                        <i class="fas fa-search text-xl"></i>
+                    </button>
+                    
+                    <!-- Dark Mode Toggle -->
+                    <button @click="toggleDarkMode()" class="text-gray-600 dark:text-gray-300 hover:text-primary focus:outline-none">
+                        <i class="fas" :class="darkMode ? 'fa-sun' : 'fa-moon'"></i>
+                    </button>
+                    
+                    <!-- Notifications -->
+                    <div class="relative" x-data="{ notificationOpen: false }">
+                        <button @click="notificationOpen = !notificationOpen" class="text-gray-600 dark:text-gray-300 hover:text-primary focus:outline-none">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span x-show="notifications > 0" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs">
+                                <span x-text="notifications"></span>
+                            </span>
+                        </button>
+                        
+                        <!-- Notification Dropdown -->
+                        <div x-show="notificationOpen" 
+                            class="absolute right-0 bg-white dark:bg-gray-800 shadow-lg rounded-lg mt-2 py-2 w-72 z-10"
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 transform scale-y-90"
+                            x-transition:enter-end="opacity-100 transform scale-y-100"
+                            @click.outside="notificationOpen = false">
+                            <div class="px-4 py-2 border-b dark:border-gray-700 flex justify-between">
+                                <p class="font-medium">Notifications</p>
+                                <button class="text-sm text-primary hover:underline">Mark all as read</button>
+                            </div>
+                            <div class="px-4 py-2 border-b dark:border-gray-700 flex items-start">
+                                <div class="bg-blue-100 dark:bg-blue-900 rounded-full p-2 mr-3">
+                                    <i class="fas fa-box text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium dark:text-white">Your order has been shipped</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Order #12345 - 2 hours ago</p>
+                                </div>
+                            </div>
+                            <div class="px-4 py-2 border-b dark:border-gray-700 flex items-start">
+                                <div class="bg-green-100 dark:bg-green-900 rounded-full p-2 mr-3">
+                                    <i class="fas fa-tag text-green-600 dark:text-green-400"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium dark:text-white">Special offer: 15% discount</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Valid until Apr 20, 2025</p>
+                                </div>
+                            </div>
+                            <div class="px-4 py-2">
+                                <a href="/notifications" class="block text-center text-sm text-primary hover:underline">View all notifications</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cart -->
+                    <div class="relative" @mouseenter="cartPreview = true" @mouseleave="cartPreview = false">
+                        <a href="/cart/" class="text-gray-600 dark:text-gray-300 hover:text-primary">
+                            <i class="fas fa-shopping-cart text-xl"></i>
+                            <span x-show="cartCount > 0" class="absolute -top-1 -right-1 bg-primary text-white rounded-full w-4 h-4 flex items-center justify-center text-xs">
+                                <span x-text="cartCount"></span>
+                            </span>
+                        </a>
+                        
+                        <!-- Cart Preview -->
+                        <div x-show="cartPreview" 
+                            class="absolute right-0 bg-white dark:bg-gray-800 shadow-lg rounded-lg mt-2 py-2 w-80 z-10"
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 transform scale-y-90"
+                            x-transition:enter-end="opacity-100 transform scale-y-100">
+                            <div class="px-4 py-2 border-b dark:border-gray-700">
+                                <p class="font-medium dark:text-white">Your Cart (3 items)</p>
+                            </div>
+                            <!-- Cart Items -->
+                            <div class="max-h-60 overflow-y-auto">
+                                <div class="px-4 py-2 border-b dark:border-gray-700 flex">
+                                    <img src="/api/placeholder/80/80" alt="Product" class="w-16 h-16 object-cover rounded">
+                                    <div class="ml-3 flex-1">
+                                        <p class="text-sm font-medium dark:text-white">Wireless Headphones</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">1 × ₹2,499</p>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-red-500 dark:hover:text-red-400">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="px-4 py-2 border-b dark:border-gray-700 flex">
+                                    <img src="/api/placeholder/80/80" alt="Product" class="w-16 h-16 object-cover rounded">
+                                    <div class="ml-3 flex-1">
+                                        <p class="text-sm font-medium dark:text-white">Smartphone Case</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">2 × ₹599</p>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-red-500 dark:hover:text-red-400">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Cart Total -->
+                            <div class="px-4 py-2 border-b dark:border-gray-700">
+                                <div class="flex justify-between py-1">
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">Subtotal</p>
+                                    <p class="text-sm font-medium dark:text-white">₹3,697</p>
+                                </div>
+                            </div>
+                            <!-- Cart Actions -->
+                            <div class="px-4 py-2 flex gap-2">
+                                <a href="/cart/" class="text-sm px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded flex-1 text-center hover:bg-gray-200 dark:hover:bg-gray-600">
+                                    View Cart
+                                </a>
+                                <a href="/checkout/" class="text-sm px-3 py-2 bg-primary text-white rounded flex-1 text-center hover:bg-primary-dark">
+                                    Checkout
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- User -->
+                    <div class="relative" x-data="{ userMenuOpen: false }">
+                        <button @click="userMenuOpen = !userMenuOpen" class="flex items-center text-gray-600 dark:text-gray-300 hover:text-primary focus:outline-none">
+                            <img src="/api/placeholder/32/32" alt="User" class="w-8 h-8 rounded-full border-2 border-gray-200 dark:border-gray-600">
+                            <span class="ml-1 hidden lg:inline-block text-sm">My Account</span>
+                            <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                        </button>
+                        
+                        <!-- User Dropdown -->
+                        <div x-show="userMenuOpen" 
+                            class="absolute right-0 bg-white dark:bg-gray-800 shadow-lg rounded-lg mt-2 py-2 w-48 z-10"
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 transform scale-y-90"
+                            x-transition:enter-end="opacity-100 transform scale-y-100"
+                            @click.outside="userMenuOpen = false">
+                            <a href="/account/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
+                                <i class="fas fa-user-circle mr-2"></i> My Profile
+                            </a>
+                            <a href="/account/orders" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
+                                <i class="fas fa-box mr-2"></i> My Orders
+                            </a>
+                            <a href="/account/wishlist" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
+                                <i class="fas fa-heart mr-2"></i> Wishlist
+                            </a>
+                            <a href="/account/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
+                                <i class="fas fa-cog mr-2"></i> Settings
+                            </a>
+                            <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                            <a href="/logout" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700">
+                                <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex">
+        <!-- Mobile Sidebar -->
+        <div 
+            class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" 
+            x-show="sidebarOpen" 
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            @click="sidebarOpen = false">
+        </div>
+        
+        <aside 
+            class="fixed top-0 left-0 h-full w-72 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out z-50 md:hidden sidebar-transition" 
+            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+            <div class="flex justify-between items-center p-4 border-b dark:border-gray-700">
+                <a href="/" class="flex items-center">
+                    <i class="fas fa-shopping-bag text-primary text-2xl mr-2"></i>
+                    <span class="text-xl font-semibold text-gray-800 dark:text-white">Elegance</span>
+                </a>
+                <button @click="sidebarOpen = false" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Mobile Search -->
+            <div class="p-4 border-b dark:border-gray-700">
+                <div class="relative">
+                    <input type="text" placeholder="Search products..." 
+                        class="w-full py-2 px-4 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <button class="absolute right-3 top-2.5 text-gray-400 hover:text-primary">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Mobile Navigation -->
+            <nav class="p-4">
+                <h2 class="text-xs uppercase font-semibold text-gray-500 dark:text-gray-400 mb-3">Categories</h2>
+                
+                <div x-data="{ catOpen: false }">
+                    <button 
+                        @click="catOpen = !catOpen" 
+                        class="flex justify-between items-center w-full px-2 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                        <div class="flex items-center">
+                            <i class="fas fa-laptop text-primary mr-3"></i>
+                            <span>Electronics</span>
+                        </div>
+                        <i class="fas" :class="catOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                    </button>
+                    
+                    <div x-show="catOpen" class="ml-5 mt-1 mb-2">
+                        <a href="#" class="block px-2 py-1 text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary">Smartphones</a>
+                        <a href="#" class="block px-2 py-1 text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary">Laptops</a>
+                        <a href="#" class="block px-2 py-1 text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary">Audio</a>
+                    </div>
+                </div>
+                
+                <a href="/category/fashion" class="flex items-center px-2 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                    <i class="fas fa-tshirt text-purple-500 mr-3"></i>
+                    <span>Fashion</span>
+                </a>
+                
+                <a href="/category/home-kitchen" class="flex items-center px-2 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                    <i class="fas fa-home text-yellow-500 mr-3"></i>
+                    <span>Home & Kitchen</span>
+                </a>
+                
+                <a href="/category/beauty" class="flex items-center px-2 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                    <i class="fas fa-spa text-pink-500 mr-3"></i>
+                    <span>Beauty</span>
+                </a>
+                
+                <a href="/deals" class="flex items-center px-2 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                    <i class="fas fa-tags text-red-600 mr-3"></i>
+                    <span>Today's Deals</span>
+                </a>
+                
+                <h2 class="text-xs uppercase font-semibold text-gray-500 dark:text-gray-400 mt-6 mb-3">Account</h2>
+                <a href="/account/profile" class="flex items-center px-2 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                    <i class="fas fa-user-circle text-gray-600 dark:text-gray-400 mr-3"></i>
+                    <span>My Profile</span>
+                </a>
+                <a href="/account/orders" class="flex items-center px-2 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                    <i class="fas fa-box text-gray-600 dark:text-gray-400 mr-3"></i>
+                    <span>My Orders</span>
+                </a>
+                <a href="/account/wishlist" class="flex items-center px-2 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                    <i class="fas fa-heart text-gray-600 dark:text-gray-400 mr-3"></i>
+                    <span>Wishlist</span>
+                </a>
+                <a href="/account/settings" class="flex items-center px-2 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                    <i class="fas fa-cog text-gray-600 dark:text-gray-400 mr-3"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+            
+            <div class="p-4 border-t dark:border-gray-700 mt-auto">
+                <a href="/logout" class="flex items-center px-2 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                    <i class="fas fa-sign-out-alt mr-3"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Desktop Sidebar -->
+        <aside class="w-64 bg-white dark:bg-gray-800 shadow-sm h-screen sticky top-0 hidden md:block">
+            <nav class="p-4">
+                <h2 class="text-xs uppercase font-semibold text-gray-500 dark:text-gray-400 mb-3">Categories</h2>
+                
+                <div x-data="{ catOpen: true }">
+                    <button 
+                        @click="catOpen = !catOpen" 
+                        class="flex justify-between items-center w-full px-2 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                        <div class="flex items-center">
+                            <i class="fas fa-laptop text-primary mr-3"></i>
+                            <span>Electronics</span>
+                        </div>
+                        <i class="fas" :class="catOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                    </button>
+                    
+                    <div x-show="catOpen" class="ml-5 mt-1 mb-2">
+                        <a href="#" class="block px-2 py-1 text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary">Smartphones</a>
+                        <a href="#" class="block px-2 py-1 text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary">Laptops</a>
+                        <a href="#" class="block px-2 py-1 text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary">Audio</a>
+                        <a href="#" class="block px-2 py-1 text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary">Accessories</a>
+                    </div>
+                </div>
+                
+                <div x-data="{ catOpen: false }">
+                    <button 
+                        @click="catOpen = !catOpen" 
+                        class="flex justify-between items-center w-full px-2 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                        <div class="flex items-center">
+                            <i class="fas fa-tshirt text-purple-500 mr-3"></i>
+                            <span>Fashion</span>
+                        </div>
+                        <i class="fas" :class="catOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                    </button>
+                    
+                    <div x-show="catOpen" class="ml-5 mt-1 mb-2">
+                        <a href="#" class="block px-2 py-1 text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary">Men's Clothing</a>
+                        <a href="#" class="block px-2 py-1 text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary">Women's Clothing</a>
+                        <a href="#" class="block px-2 py-1 text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary">Footwear</a>
+                    </div>
+                </div>
+                
+                <div x-data="{ catOpen: false }">
+                    <button 
+                        @click="catOpen = !catOpen" 
+                        class="flex justify-between items-center w-full px-2 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                        <div class="flex items-center">
+                            <i class="fas fa-home text-yellow-500 mr-3"></i>
+                            <span>Home & Kitchen</span>
+                        </div>
+                        <i class="fas" :class="catOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                    </button>
+                    
+                    <div x-show="catOpen" class="ml-5 mt-1 mb-2">
+                        <a href="#" class="block px-2 py-1 text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary">Appliances</a>
+                        <a href="#" class="block px-2 py-1 text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary">Kitchenware</a>
+                        <a href="#" class="block px-2 py-1 text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary">Furniture</a>
+                    </div>
+                </div>
+                
+                <a href="/deals" class="flex items-center px-2 py-2 text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                    <i class="fas fa-tags text-red-600 mr-3"></i>
+                    <span>Today's Deals</span>
+                </a>
+                
+                <div class="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg mt-6">
+                    <h3 class="font-medium text-gray-800 dark:text-white mb-2">Special Offers</h3>
+                    <img src="/api/placeholder/220/120" alt="Special Offer" class="w-full h-24 object-cover rounded mb-2">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Get 20% off on all electronics</p>
+                    <a href="/offers" class="text-sm text-primary hover:underline mt-1 inline-block">View Offers</a>
+                </div>
+                
+                <h2 class="text-xs uppercase font-semibold text-gray-500 dark:text-gray-400 mt-6 mb-3">Account</h2>
+                <a href="/account/profile" class="flex items-center px-2 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                    <i class="fas fa-user-circle text-gray-600 dark:text-gray-400 mr-3"></i>
+                    <span>My Profile</span>
+                </a>
+                <a href="/account/orders" class="flex items-center px-2 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                    <i class="fas fa-box text-gray-600 dark:text-gray-400 mr-3"></i>
+                    <span>My Orders</span>
+                </a>
+                <a href="/account/wishlist" class="flex items-center px-2 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                    <i class="fas fa-heart text-gray-600 dark:text-gray-400 mr-3"></i>
+                    <span>Wishlist</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main content -->
+        <main class="flex-1 p-6">
+            <!-- Page content -->
+            {% block content %}{% endblock %}
+            
+            <!-- Newsletter and Footer not part of content block -->
+            <div class="mt-12 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 mb-6">
+                <div class="max-w-2xl mx-auto text-center">
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Stay Updated</h2>
+                    <p class="text-gray-600 dark:text-gray-400 mb-6">Subscribe to our newsletter for exclusive offers and updates</p>
+                    
+                    <form class="flex">
+                        <input type="email" placeholder="Your email address" class="flex-1 px-4 py-2 rounded-l-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <button type="submit" class="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-r-lg">Subscribe</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-gray-800 pt-12 pb-6 border-t dark:border-gray-700">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div>
+                    <a href="/" class="flex items-center mb-4">
+                        <i class="fas fa-shopping-bag text-primary text-2xl mr-2"></i>
+                        <span class="text-xl font-semibold text-gray-800 dark:text-white">Elegance</span>
+                    </a>
+                    <p class="text-gray-600 dark:text-gray-400 mb-4">Your one-stop destination for all your shopping needs.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="text-gray-500 hover:text-primary dark:text-gray-400 dark:hover:text-primary">
+                            <i class="fab fa-pinterest"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-gray-800 dark:text-white font-medium mb-4">Shop</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary">New Arrivals</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary">Best Sellers</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary">Today's Deals</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary">Gift Cards</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-gray-800 dark:text-white font-medium mb-4">Customer Service</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary">Contact Us</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary">FAQs</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary">Shipping Policy</a></li>
+                        <li><a href="#" class="text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary">Returns & Exchanges</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-gray-800 dark:text-white font-medium mb-4">Contact</h3>
+                    <ul class="space-y-2">
+                        <li class="flex items-start">
+                            <i class="fas fa-map-marker-alt text-primary mt-1 mr-2"></i>
+                            <span class="text-gray-600 dark:text-gray-400">123 Shopping Street, Mumbai, India</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-phone-alt text-primary mt-1 mr-2"></i>
+                            <span class="text-gray-600 dark:text-gray-400">+91 9876543210</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-envelope text-primary mt-1 mr-2"></i>
+                            <span class="text-gray-600 dark:text-gray-400">support@elegance.com</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t dark:border-gray-700 mt-8 pt-6">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">© 2025 Elegance. All rights reserved.</p>
+                    
+                    <div class="mt-4 md:mt-0">
+                        <div class="flex space-x-4">
+                            <a href="#" class="text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary text-sm">Privacy Policy</a>
+                            <a href="#" class="text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary text-sm">Terms of Service</a>
+                            <a href="#" class="text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary text-sm">Sitemap</a>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 md:mt-0">
+                        <img src="/api/placeholder/200/32" alt="Payment Methods" class="h-8">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to top button -->
+    <button id="backToTop" class="fixed bottom-6 right-6 bg-primary hover:bg-primary-dark text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-opacity duration-300 opacity-0">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <!-- Modal: Quick View (example) -->
+    <div id="quickViewModal" x-data="{ open: false }" x-show="open" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div 
+                x-show="open" 
+                x-transition:enter="ease-out duration-300" 
+                x-transition:enter-start="opacity-0" 
+                x-transition:enter-end="opacity-100" 
+                x-transition:leave="ease-in duration-200" 
+                x-transition:leave-start="opacity-100" 
+                x-transition:leave-end="opacity-0" 
+                class="fixed inset-0 transition-opacity">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            
+            <div 
+                x-show="open" 
+                x-transition:enter="ease-out duration-300" 
+                x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+                x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" 
+                x-transition:leave="ease-in duration-200" 
+                x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" 
+                x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+                class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full sm:p-6">
+                
+                <div class="absolute top-0 right-0 pt-4 pr-4">
+                    <button @click="open = false" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <img src="/api/placeholder/500/500" alt="Product" class="w-full h-80 object-cover rounded-lg">
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-gray-800 dark:text-white">Product Title</h3>
+                        <div class="flex items-center mt-2">
+                            <div class="flex text-yellow-400">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
+                            </div>
+                            <span class="text-gray-600 dark:text-gray-400 text-sm ml-2">(4.5/5)</span>
+                        </div>
+                        
+                        <p class="text-2xl font-bold text-gray-800 dark:text-white mt-4">₹1,999</p>
+                        <p class="text-sm text-green-600 dark:text-green-400">In Stock</p>
+                        
+                        <div class="mt-4">
+                            <h4 class="font-medium text-gray-800 dark:text-white">Description</h4>
+                            <p class="text-gray-600 dark:text-gray-400 mt-2">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vitae eros quis nisl aliquam accumsan.</p>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <div class="flex items-center space-x-4">
+                                <div>
+                                    <label class="block text-sm text-gray-700 dark:text-gray-300 mb-1">Quantity</label>
+                                    <div class="flex items-center border rounded">
+                                        <button class="px-3 py-1 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">-</button>
+                                        <span class="px-4 py-1">1</span>
+                                        <button class="px-3 py-1 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 flex space-x-4">
+                                <button class="flex-1 bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-md">
+                                    Add to Cart
+                                </button>
+                                <button class="px-3 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-md">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                            </div>
+                            
+                            <a href="/product-detail" class="mt-4 inline-block text-primary hover:underline">View Full Details</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mobile sidebar toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            // Back to top button
+            const backToTopButton = document.getElementById('backToTop');
+            
+            window.addEventListener('scroll', function() {
+                if (window.pageYOffset > 300) {
+                    backToTopButton.classList.remove('opacity-0');
+                } else {
+                    backToTopButton.classList.add('opacity-0');
+                }
+            });
+            
+            backToTopButton.addEventListener('click', function() {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+            
+            // Simulating page load with a loading screen
+            // This is just for demo, you'd typically show this during AJAX calls or page navigation
+            setTimeout(function() {
+                document.getElementById('loading-overlay').classList.add('hidden');
+            }, 500);
+            
+            // Quick view modal demonstration
+            document.querySelectorAll('.quick-view-trigger').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    document.querySelector('#quickViewModal').__x.$data.open = true;
+                });
+            });
+        });
+    </script>
+</body>
+</html>
