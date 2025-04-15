@@ -1,7 +1,3 @@
-Here's a sample `README.md` for your Django E-commerce project:
-
----
-
 # 🛒 Django E-Commerce Website
 
 This is a simple and functional E-commerce web application built using Django. It includes a user-facing **Home Page** for browsing products and an **Admin Panel** to manage products.
